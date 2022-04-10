@@ -1,0 +1,59 @@
+{
+  "variables":{
+    "datacenter": "Datacenter",
+    "cluster": "CLuster HA",
+    "datastore": "datastore1",
+    "target_vm": "packer-test",
+    "templates_dir": "Templates",
+    "network": "VM Network 2"
+  },
+  "builders": [
+    {
+      "type": "vsphere-iso",
+      "vcenter_server": "{{ vcenter_address }}",
+      "username": "{{ vcenter_username }}",
+      "password": "{{ vcenter_password }}",
+      "datacenter": "{{ '{{' }}user `datacenter` {{ '}}' }}",
+      "cluster": "{{ '{{' }}user `cluster`{{ '}}' }}",
+      "datastore": "{{ '{{' }}user `datastore`{{ '}}' }}",
+      "folder": "{{ '{{' }}user `templates_dir`{{ '}}' }}",
+      "insecure_connection": "true",
+      "vm_name": "{{ '{{' }}user `target_vm`{{ '}}' }}",
+      "CPUs": "1",
+      "RAM": "2048",
+      "RAM_reserve_all": "false",
+      "firmware": "bios",
+      "guest_os_type": "rhel8_64Guest",
+      "boot_command": "<wait10><tab>linux inst.ks=hd:/dev/sr1:ks.cfg<enter>",
+      "boot_order": "disk,cdrom",
+      "boot_wait": "10s",
+      "convert_to_template": "true",
+      "iso_paths": [
+        "[ds418-storage1] ISOs/rhel-8.5-x86_64-dvd.iso",
+        "[ds418-storage1] ISOs/rhel8_ks.iso",
+        "[] /vmimages/tools-isoimages/linux.iso"
+      ],
+      "network_adapters": [
+        {
+          "network": "{{ network }}",
+          "network_card": "vmxnet3"
+        }
+      ],
+      "disk_controller_type": "pvscsi",
+      "storage": [
+        {
+          "disk_size": "20480",
+          "disk_thin_provisioned": "true"
+        }
+      ],
+      "ssh_username": "root",
+      "ssh_password": "password"
+    }
+  ], 
+  "provisioners": [
+      {
+          "type": "shell-local",
+          "command": "GOVC_URL='https://{{ vcenter_username }}:{{ vcenter_password }}@{{ vcenter_address }}' GOVC_INSECURE=1 govc device.remove -vm {{ '{{' }}user `target_vm`{{ '}}' }} 'ethernet-0'"
+      }
+  ]
+}

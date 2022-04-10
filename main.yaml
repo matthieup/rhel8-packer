@@ -1,0 +1,25 @@
+- name: Create Template on Vcenter
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: include vars
+      include_vars: ./vars.yaml
+
+    - name: Get current dir
+      command: pwd
+      register: pwd
+
+    - name: Create ISO to be pushed to the Vcenter
+      command: genisoimage -o rhel8_ks.iso -V "OEMDRV" ks.cfg
+
+    - name: Wait for user to push the Kickstart image to Vcenter
+      pause:
+        prompt: "Make sure to upload the Kickstart ISO if you changed the ks.cfg"
+
+    - name: Create packer file from template
+      template:
+        src: template.json.j2
+        dest: template.json
+
+    - name: Build the template
+      command: docker run --rm --mount type=bind,source={{ pwd.stdout }}/template.json,target=/tmp/template.json test packer build /tmp/template.json
